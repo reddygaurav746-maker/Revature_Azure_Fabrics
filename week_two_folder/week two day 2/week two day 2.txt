@@ -1,0 +1,181 @@
+SQL_Subqueries_Employee_Assignment
+
+USE CompanyDB;
+CREATE TABLE Employees (
+    EmployeeID INT PRIMARY KEY,
+    EmployeeName VARCHAR(100),
+    Department VARCHAR(50),
+    Salary DECIMAL(10,2),
+    ManagerID INT,
+    HireDate DATE
+);
+INSERT INTO Employees VALUES
+(101, 'John', 'Sales', 50000, 201, '2021-01-10'),
+(102, 'Mary', 'Sales', 65000, 201, '2020-03-15'),
+(103, 'David', 'HR', 55000, 202, '2022-05-20'),
+(104, 'Sophia', 'HR', 70000, 202, '2019-07-18'),
+(105, 'James', 'IT', 80000, 203, '2018-11-01'),
+(106, 'Emma', 'IT', 75000, 203, '2021-09-25'),
+(107, 'Michael', 'Finance', 90000, 204, '2017-06-12'),
+(108, 'Olivia', 'Finance', 60000, 204, '2023-02-01');
+
+-- 1. Find employees earning more than the average salary.--
+select * FROM Employees where salary > 
+(select avg (salary) from Employees  );
+
+
+#Employees earning highest salary
+SELECT * 
+FROM Employees
+WHERE Salary = (SELECT MAX(Salary) FROM Employees);
+  
+  
+  
+  
+  # second highest 
+SELECT * 
+FROM Employees
+WHERE Salary = (
+    SELECT MAX(Salary) 
+    FROM Employees 
+    WHERE Salary < (SELECT MAX(Salary) FROM Employees)
+);
+ 
+ 
+ 
+ 
+ # ✅ 4. Salary less than maximum
+SELECT * 
+FROM Employees
+WHERE Salary < (SELECT MAX(Salary) FROM Employees);
+
+
+
+#	Find employees working in the same department as the employee with the highest salary
+SELECT * 
+FROM Employees
+WHERE Department = (
+    SELECT Department 
+    FROM Employees 
+    WHERE Salary = (SELECT MAX(Salary) FROM Employees)
+);
+
+
+
+
+
+# 6 Find departments having employees with salary > 70,000
+SELECT Department
+FROM Employees
+WHERE Salary > 70000;	
+
+
+
+
+
+
+ # 7. Salary above department average
+SELECT *
+FROM Employees e
+WHERE Salary > (
+    SELECT AVG(Salary)
+    FROM Employees
+    WHERE Department = e.Department
+);
+
+#8. Salary greater than ALL HR employees 
+SELECT EmployeeName, Salary
+FROM Employees
+WHERE Salary > ALL (
+    SELECT Salary  
+    FROM Employees 
+    WHERE Department = 'HR'
+);
+
+
+# 9  9. Find employees whose salary matches any salary in the Sales department.
+
+SELECT *
+FROM Employees
+WHERE Salary = ANY (
+    SELECT Salary FROM Employees WHERE Department = 'Sales'
+);
+
+
+
+
+
+
+
+
+
+
+#Q10: Find employees hired after the employee with the lowest salary
+ SELECT *
+FROM Employees
+WHERE HireDate > (
+    SELECT HireDate
+    FROM Employees
+    WHERE Salary = (SELECT MIN(Salary) FROM Employees)
+); 
+	
+    
+#11. Find the department with the highest average salary.
+	
+    
+SELECT Department
+FROM Employees
+GROUP BY Department
+HAVING AVG(Salary) = (
+    SELECT MAX(avg_sal)
+    FROM (
+        SELECT AVG(Salary) AS avg_sal
+        FROM Employees
+        GROUP BY Department
+    ) AS temp	
+);
+
+
+
+# 12: Find employees who earn the minimum salary in their department
+
+SELECT *
+FROM Employees 
+WHERE Salary = (
+    SELECT MIN(Salary)
+    FROM Employees
+    WHERE Department = Employees.Department
+);
+	#13. Display managers who manage employees earning more than 75000
+
+SELECT DISTINCT ManagerID
+FROM Employees
+WHERE ManagerID IN
+(
+    SELECT ManagerID
+    FROM Employees
+    WHERE Salary > 75000
+);
+
+
+#14. Find employees whose salary is greater than their manager's salary
+
+SELECT e.EmployeeName,
+       e.Salary,
+       m.EmployeeName AS ManagerName,
+       m.Salary AS ManagerSalary
+FROM Employees e
+JOIN Employees m
+ON e.ManagerID = m.EmployeeID
+WHERE e.Salary > m.Salary;
+
+#15. Find the top 3 highest paid employees using a subquery
+
+SELECT EmployeeName, Salary
+FROM Employees e1
+WHERE 3 >
+(
+    SELECT COUNT(DISTINCT Salary)
+    FROM Employees e2
+    WHERE e2.Salary > e1.Salary
+);
